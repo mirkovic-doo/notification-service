@@ -1,18 +1,27 @@
 ﻿using AutoMapper;
+using Microsoft.AspNetCore.SignalR;
 using NotificationService.Application.Repositories;
 using NotificationService.Application.Services;
+using NotificationService.Contracts.Constants;
+using NotificationService.Contracts.Data;
 using NotificationService.Domain;
+using NotificationService.Infrastructure.Hubs;
 
 namespace NotificationService.Infrastructure.Services;
 
 public class NotificationService : INotificationService
 {
     private readonly IMapper mapper;
+    private readonly IHubContext<NotificationHub> notificationHubContext;
     private readonly INotificationRepository notificationRepository;
 
-    public NotificationService(IMapper mapper, INotificationRepository notificationRepository)
+    public NotificationService(
+        IMapper mapper,
+        IHubContext<NotificationHub> hubContext,
+        INotificationRepository notificationRepository)
     {
         this.mapper = mapper;
+        this.notificationHubContext = hubContext;
         this.notificationRepository = notificationRepository;
     }
 
@@ -45,9 +54,9 @@ public class NotificationService : INotificationService
 
     public async Task HandleNotificationAsync(Notification notification)
     {
-        await notificationRepository.AddAsync(notification);
+        var addedNotification = await notificationRepository.AddAsync(notification);
 
-        // publish event to SignalR
+        await notificationHubContext.Clients.Group(notification.ReceiverId.ToString()).SendAsync(General.SendNotificationMethodName, mapper.Map<NotificationOutput>(addedNotification));
     }
 
     public async Task MarkAllAsReadAsync()
