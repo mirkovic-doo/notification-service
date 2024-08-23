@@ -1,12 +1,11 @@
 ﻿using NotificationService.Domain;
 
-namespace NotificationService.Controllers.Notification.Requests;
+namespace NotificationService.Contracts.Data;
 
-public record NotificationRequest
+public class NotificationPayload
 {
     public Guid SenderId { get; set; }
     public Guid ReceiverId { get; set; }
     public Guid EntityId { get; set; }
     public NotificationType Type { get; set; }
-    public bool IsRead { get; set; }
 }

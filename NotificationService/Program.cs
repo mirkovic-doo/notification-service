@@ -5,7 +5,9 @@ using NotificationService.Application.Repositories;
 using NotificationService.Application.Services;
 using NotificationService.Configuration;
 using NotificationService.Infrastructure;
+using NotificationService.Infrastructure.HostedServices;
 using NotificationService.Infrastructure.Repositories;
+using NotificationService.Infrastructure.Services;
 using System.Reflection;
 using System.Text.Json.Serialization;
 
@@ -61,6 +63,7 @@ builder.Services
 builder.Services.AddHttpContextAccessor();
 
 builder.Services.Configure<FirebaseAuthClientConfig>(builder.Configuration.GetSection("FirebaseAuthClientConfig"));
+builder.Services.Configure<RabbitMQConfig>(builder.Configuration.GetSection("RabbitMQConfig"));
 
 builder.Services.AddAutoMapper(Assembly.GetExecutingAssembly());
 
@@ -76,6 +79,10 @@ builder.Services.AddRouting(options =>
 builder.Services.AddScoped<INotificationService, NotificationService.Infrastructure.Services.NotificationService>();
 
 builder.Services.AddScoped<INotificationRepository, NotificationRepository>();
+
+builder.Services.AddSingleton<INotificationReceiverService, NotificationReceiverService>();
+
+builder.Services.AddHostedService<NotificationReceiverListenerHostedService>();
 
 var app = builder.Build();
 
