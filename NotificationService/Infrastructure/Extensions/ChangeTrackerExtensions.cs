@@ -6,7 +6,7 @@ namespace NotificationService.Infrastructure.Extensions;
 
 public static class ChangeTrackerExtensions
 {
-    public static void SetAuditProperties(this ChangeTracker changeTracker, Guid currentUserId)
+    public static void SetAuditProperties(this ChangeTracker changeTracker)
     {
         changeTracker.DetectChanges();
         var createdEntities = changeTracker
@@ -34,8 +34,6 @@ public static class ChangeTrackerExtensions
                 var entity = (IAuditedEntity)entry.Entity;
                 entity.CreatedAt = DateTime.UtcNow;
                 entity.UpdatedAt = DateTime.UtcNow;
-                entity.UpdatedById = currentUserId;
-                entity.CreatedById = currentUserId;
             }
         }
 
@@ -50,7 +48,6 @@ public static class ChangeTrackerExtensions
             {
                 var entity = (IAuditedEntity)entry.Entity;
                 entity.UpdatedAt = DateTime.UtcNow;
-                entity.UpdatedById = currentUserId;
             }
         }
     }

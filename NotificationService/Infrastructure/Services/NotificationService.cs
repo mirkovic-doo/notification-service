@@ -33,9 +33,26 @@ public class NotificationService : INotificationService
         return await notificationRepository.GetAsync(id);
     }
 
+    public async Task<ICollection<Notification>> GetMyNotificationsAsync()
+    {
+        return await notificationRepository.GetMyNotificationsAsync();
+    }
+
     public async Task<ICollection<Notification>> GetMyUnreadNotificationsAsync()
     {
         return await notificationRepository.GetMyUnreadNotificationsAsync();
+    }
+
+    public async Task HandleNotificationAsync(Notification notification)
+    {
+        await notificationRepository.AddAsync(notification);
+
+        // publish event to SignalR
+    }
+
+    public async Task MarkAllAsReadAsync()
+    {
+        await notificationRepository.MarkAllAsReadAsync();
     }
 
     public async Task<Notification> MarkAsReadAsync(Guid id)
