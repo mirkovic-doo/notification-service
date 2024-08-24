@@ -9,7 +9,7 @@ public class NotificationHub : Hub<INotificationHub>
 
     public NotificationHub(NotificationDbContext notificationDbContext)
     {
-        this.dbContext = notificationDbContext;
+        dbContext = notificationDbContext;
     }
 
     public override async Task OnConnectedAsync()
