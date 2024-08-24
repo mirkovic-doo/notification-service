@@ -8,7 +8,6 @@ namespace NotificationService.Infrastructure;
 
 public class NotificationDbContext : DbContext
 {
-    private readonly IConfiguration configuration;
     private readonly IHttpContextAccessor httpContextAccessor;
 
     public Guid? CurrentUserId
@@ -26,12 +25,8 @@ public class NotificationDbContext : DbContext
         }
     }
 
-    public NotificationDbContext(
-        DbContextOptions options,
-        IConfiguration configuration,
-        IHttpContextAccessor httpContextAccessor) : base(options)
+    public NotificationDbContext(DbContextOptions options, IHttpContextAccessor httpContextAccessor) : base(options)
     {
-        this.configuration = configuration;
         this.httpContextAccessor = httpContextAccessor;
     }
 

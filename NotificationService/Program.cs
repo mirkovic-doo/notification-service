@@ -1,11 +1,14 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using Newtonsoft.Json;
 using NotificationService.Application.Repositories;
 using NotificationService.Application.Services;
 using NotificationService.Configuration;
+using NotificationService.Contracts.Data;
 using NotificationService.Infrastructure;
 using NotificationService.Infrastructure.HostedServices;
+using NotificationService.Infrastructure.Hubs;
 using NotificationService.Infrastructure.Repositories;
 using NotificationService.Infrastructure.Services;
 using System.Reflection;
@@ -58,6 +61,22 @@ builder.Services
     {
         options.Authority = "https://securetoken.google.com/" + firebaseProjectId;
         options.TokenValidationParameters = tokenValidationParameters;
+
+        options.Events = new JwtBearerEvents
+        {
+            OnMessageReceived = context =>
+            {
+                var accessToken = context.Request.Query["access_token"];
+                var path = context.HttpContext.Request.Path;
+                if (!string.IsNullOrEmpty(accessToken) && path.StartsWithSegments("/notificationHub"))
+                {
+                    var hubInput = JsonConvert.DeserializeObject<HubAccessInput>(accessToken!);
+                    context.Token = hubInput!.Token;
+                }
+
+                return Task.CompletedTask;
+            }
+        };
     });
 
 builder.Services.AddHttpContextAccessor();
@@ -81,6 +100,8 @@ builder.Services.AddScoped<INotificationService, NotificationService.Infrastruct
 builder.Services.AddScoped<INotificationRepository, NotificationRepository>();
 
 builder.Services.AddSingleton<INotificationReceiverService, NotificationReceiverService>();
+
+builder.Services.AddSignalR();
 
 builder.Services.AddHostedService<NotificationReceiverListenerHostedService>();
 
@@ -110,7 +131,12 @@ app.UseAuthorization();
 
 app.UseHttpsRedirection();
 
-app.MapControllers();
+
+app.UseEndpoints(endpoints =>
+{
+    endpoints.MapControllers();
+    endpoints.MapHub<NotificationHub>("/notificationHub");
+});
 
 app.MapDefaultControllerRoute();
 
