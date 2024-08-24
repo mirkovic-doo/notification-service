@@ -16,5 +16,6 @@ public class NotificationProfile : Profile
             .ForMember(d => d.IsRead, opt => opt.MapFrom(o => false));
 
         CreateMap<Notification, NotificationResponse>();
+        CreateMap<Notification, NotificationOutput>();
     }
 }
