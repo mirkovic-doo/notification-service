@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.SignalR;
 using NotificationService.Application.Repositories;
 using NotificationService.Application.Services;
 using NotificationService.Contracts.Constants;
-using NotificationService.Contracts.Data;
+using NotificationService.Controllers.Notification.Responses;
 using NotificationService.Domain;
 using NotificationService.Infrastructure.Hubs;
 
@@ -56,7 +56,7 @@ public class NotificationService : INotificationService
     {
         var addedNotification = await notificationRepository.AddAsync(notification);
 
-        await notificationHubContext.Clients.Group(notification.ReceiverId.ToString()).SendAsync(General.SendNotificationMethodName, mapper.Map<NotificationOutput>(addedNotification));
+        await notificationHubContext.Clients.Group(notification.ReceiverId.ToString()).SendAsync(General.SendNotificationMethodName, mapper.Map<NotificationResponse>(addedNotification));
     }
 
     public async Task MarkAllAsReadAsync()
