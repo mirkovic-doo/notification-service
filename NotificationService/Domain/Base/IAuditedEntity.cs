@@ -1,9 +1,11 @@
 ﻿namespace NotificationService.Domain.Base;
 
+// <summary>
+// This represents anonymously created audited entity.
+// It is created by system.
+// </summary>
 public interface IAuditedEntity
 {
-    Guid CreatedById { get; set; }
-    Guid UpdatedById { get; set; }
     DateTime CreatedAt { get; set; }
     DateTime UpdatedAt { get; set; }
 }
