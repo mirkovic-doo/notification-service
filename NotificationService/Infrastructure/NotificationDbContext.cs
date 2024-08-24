@@ -33,6 +33,10 @@ public class NotificationDbContext : DbContext
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);
+
+        builder.Entity<NotificationSetting>()
+            .HasIndex(x => x.UserId)
+            .IsUnique();
     }
 
     public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
@@ -60,4 +64,5 @@ public class NotificationDbContext : DbContext
     }
 
     public DbSet<Notification> Notifications => Set<Notification>();
+    public DbSet<NotificationSetting> NotificationSettings => Set<NotificationSetting>();
 }
