@@ -96,8 +96,10 @@ builder.Services.AddRouting(options =>
 });
 
 builder.Services.AddScoped<INotificationService, NotificationService.Infrastructure.Services.NotificationService>();
+builder.Services.AddScoped<INotificationSettingService, NotificationSettingService>();
 
 builder.Services.AddScoped<INotificationRepository, NotificationRepository>();
+builder.Services.AddScoped<INotificationSettingRepository, NotificationSettingRepository>();
 
 builder.Services.AddSingleton<INotificationReceiverService, NotificationReceiverService>();
 

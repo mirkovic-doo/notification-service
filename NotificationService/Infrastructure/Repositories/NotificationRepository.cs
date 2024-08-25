@@ -24,7 +24,7 @@ public class NotificationRepository : BaseRepository<Notification>, IBaseReposit
 
     public async Task<ICollection<Notification>> GetMyNotificationsAsync()
     {
-        return await dbContext.Notifications.Where(n => n.ReceiverId == dbContext.CurrentUserId).ToListAsync();
+        return await dbContext.Notifications.Where(n => n.ReceiverId == dbContext.CurrentUserId).OrderByDescending(n => n.UpdatedAt).ToListAsync();
     }
 
     public async Task<ICollection<Notification>> GetMyUnreadNotificationsAsync()
