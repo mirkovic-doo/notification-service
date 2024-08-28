@@ -13,6 +13,7 @@ using NotificationService.Infrastructure.Repositories;
 using NotificationService.Infrastructure.Services;
 using System.Reflection;
 using System.Text.Json.Serialization;
+using Serilog;
 
 var AllowAllOrigins = "_AllowAllOrigins";
 
@@ -43,6 +44,9 @@ builder.Services.AddControllers().AddJsonOptions(options =>
     options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
     options.JsonSerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
 });
+
+builder.Host.UseSerilog((context, loggerConfig) =>
+    loggerConfig.ReadFrom.Configuration(context.Configuration));
 
 var firebaseProjectId = builder.Configuration["FirebaseAuthClientConfig:ProjectId"];
 
@@ -89,6 +93,11 @@ builder.Services.AddAutoMapper(Assembly.GetExecutingAssembly());
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+if (!string.IsNullOrWhiteSpace(builder.Configuration.GetSection("ElasticApm").GetValue<string>("ServerCert")))
+{
+    builder.Services.AddElasticApm();
+}
+
 builder.Services.AddRouting(options =>
 {
     options.LowercaseUrls = true;
@@ -120,6 +129,9 @@ app.UseSwagger((opt) =>
 });
 
 app.UseSwaggerUI();
+
+app.UseMiddleware<RequestContextLoggingMiddleware>();
+app.UseSerilogRequestLogging();
 
 app.UseDefaultFiles();
 app.UseStaticFiles();
