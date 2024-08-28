@@ -95,7 +95,7 @@ builder.Services.AddSwaggerGen();
 
 if (!string.IsNullOrWhiteSpace(builder.Configuration.GetSection("ElasticApm").GetValue<string>("ServerCert")))
 {
-    builder.Services.AddElasticApm();
+    builder.Services.AddAllElasticApm();
 }
 
 builder.Services.AddRouting(options =>
