@@ -14,7 +14,7 @@ public class NotificationRepository : BaseRepository<Notification>, IBaseReposit
     {
         var notification = await base.GetAsync(id);
 
-        if (notification.RecieverId != dbContext.CurrentUserId)
+        if (notification.ReceiverId != dbContext.CurrentUserId)
         {
             throw new Exception($"Entity with {id} not found");
         }
@@ -22,8 +22,18 @@ public class NotificationRepository : BaseRepository<Notification>, IBaseReposit
         return notification;
     }
 
+    public async Task<ICollection<Notification>> GetMyNotificationsAsync()
+    {
+        return await dbContext.Notifications.Where(n => n.ReceiverId == dbContext.CurrentUserId).OrderByDescending(n => n.UpdatedAt).ToListAsync();
+    }
+
     public async Task<ICollection<Notification>> GetMyUnreadNotificationsAsync()
     {
-        return await dbContext.Notifications.Where(n => !n.IsRead && n.RecieverId == dbContext.CurrentUserId).ToListAsync();
+        return await dbContext.Notifications.Where(n => !n.IsRead && n.ReceiverId == dbContext.CurrentUserId).ToListAsync();
+    }
+
+    public async Task MarkAllAsReadAsync()
+    {
+        await dbContext.Notifications.Where(n => n.ReceiverId == dbContext.CurrentUserId).ExecuteUpdateAsync((setters) => setters.SetProperty(n => n.IsRead, true));
     }
 }

@@ -1,13 +1,19 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using Newtonsoft.Json;
 using NotificationService.Application.Repositories;
 using NotificationService.Application.Services;
 using NotificationService.Configuration;
+using NotificationService.Contracts.Data;
 using NotificationService.Infrastructure;
+using NotificationService.Infrastructure.HostedServices;
+using NotificationService.Infrastructure.Hubs;
 using NotificationService.Infrastructure.Repositories;
+using NotificationService.Infrastructure.Services;
 using System.Reflection;
 using System.Text.Json.Serialization;
+using Serilog;
 
 var AllowAllOrigins = "_AllowAllOrigins";
 
@@ -39,6 +45,9 @@ builder.Services.AddControllers().AddJsonOptions(options =>
     options.JsonSerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
 });
 
+builder.Host.UseSerilog((context, loggerConfig) =>
+    loggerConfig.ReadFrom.Configuration(context.Configuration));
+
 var firebaseProjectId = builder.Configuration["FirebaseAuthClientConfig:ProjectId"];
 
 var tokenValidationParameters = new TokenValidationParameters
@@ -56,16 +65,38 @@ builder.Services
     {
         options.Authority = "https://securetoken.google.com/" + firebaseProjectId;
         options.TokenValidationParameters = tokenValidationParameters;
+
+        options.Events = new JwtBearerEvents
+        {
+            OnMessageReceived = context =>
+            {
+                var accessToken = context.Request.Query["access_token"];
+                var path = context.HttpContext.Request.Path;
+                if (!string.IsNullOrEmpty(accessToken) && path.StartsWithSegments("/notificationHub"))
+                {
+                    var hubInput = JsonConvert.DeserializeObject<HubAccessInput>(accessToken!);
+                    context.Token = hubInput!.Token;
+                }
+
+                return Task.CompletedTask;
+            }
+        };
     });
 
 builder.Services.AddHttpContextAccessor();
 
 builder.Services.Configure<FirebaseAuthClientConfig>(builder.Configuration.GetSection("FirebaseAuthClientConfig"));
+builder.Services.Configure<RabbitMQConfig>(builder.Configuration.GetSection("RabbitMQConfig"));
 
 builder.Services.AddAutoMapper(Assembly.GetExecutingAssembly());
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+
+if (!string.IsNullOrWhiteSpace(builder.Configuration.GetSection("ElasticApm").GetValue<string>("ServerCert")))
+{
+    builder.Services.AddAllElasticApm();
+}
 
 builder.Services.AddRouting(options =>
 {
@@ -74,8 +105,16 @@ builder.Services.AddRouting(options =>
 });
 
 builder.Services.AddScoped<INotificationService, NotificationService.Infrastructure.Services.NotificationService>();
+builder.Services.AddScoped<INotificationSettingService, NotificationSettingService>();
 
 builder.Services.AddScoped<INotificationRepository, NotificationRepository>();
+builder.Services.AddScoped<INotificationSettingRepository, NotificationSettingRepository>();
+
+builder.Services.AddSingleton<INotificationReceiverService, NotificationReceiverService>();
+
+builder.Services.AddSignalR();
+
+builder.Services.AddHostedService<NotificationReceiverListenerHostedService>();
 
 var app = builder.Build();
 
@@ -91,6 +130,9 @@ app.UseSwagger((opt) =>
 
 app.UseSwaggerUI();
 
+app.UseMiddleware<RequestContextLoggingMiddleware>();
+app.UseSerilogRequestLogging();
+
 app.UseDefaultFiles();
 app.UseStaticFiles();
 
@@ -103,7 +145,12 @@ app.UseAuthorization();
 
 app.UseHttpsRedirection();
 
-app.MapControllers();
+
+app.UseEndpoints(endpoints =>
+{
+    endpoints.MapControllers();
+    endpoints.MapHub<NotificationHub>("/notificationHub");
+});
 
 app.MapDefaultControllerRoute();
 
