@@ -40,8 +40,10 @@ public class NotificationSettingService : INotificationSettingService
 
         return type switch
         {
-            NotificationType.ReservationCancellation => userNotificationSetting.IsReservationCancellationNotificationEnabled,
-            NotificationType.ReservationResponse => userNotificationSetting.IsReservationResponseNotificationEnabled,
+            NotificationType.ReservationCancelled => userNotificationSetting.IsReservationCancelledNotificationEnabled,
+            NotificationType.ReservationConfirmed => userNotificationSetting.IsReservationConfirmedNotificationEnabled,
+            NotificationType.ReservationRejected => userNotificationSetting.IsReservationRejectedNotificationEnabled,
+            NotificationType.ReservationDeleted => userNotificationSetting.IsReservationDeletedNotificationEnabled,
             NotificationType.ReservationRequest => userNotificationSetting.IsReservationRequestNotificationEnabled,
             NotificationType.ReviewRecieved => userNotificationSetting.IsReviewRecievedNotificationEnabled,
             _ => true,
